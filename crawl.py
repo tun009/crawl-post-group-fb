@@ -283,17 +283,18 @@ def crawlPostData(driver, postIds, type = 'page'):
 driver = initDriverProfile()
 isLogin = checkLiveClone(driver)  # Check live
 print(isLogin)
-userName = 'tun009' # your user name fb
-passWord = 'tungphongkeo2k' # your password fb
-twoFa= '6UR3 CSOV LWST AV2I 4AU6 T56R W3AN 2Y5O' # 2fa code
+userName = '' # your user name fb
+passWord = '' # your password fb
+twoFa= '' # 2fa code
 limitPost = 1000
+idGroup = 'mfgvalley' # id group
 
 if (isLogin == True):
     loginBy2FA(driver, userName, passWord, twoFa)
 
 value = input('Enter 1 to crawl id post of group, enter 2 to crawl content: ')
 if (int(value) == 1):
-    getPostsGroup(driver, 'mfgvalley', limitPost)
+    getPostsGroup(driver, idGroup, limitPost)
 else:
     postIds = readData(fileIds)
     crawlPostData(driver, postIds, 'group')
