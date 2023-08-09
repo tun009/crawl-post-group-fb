@@ -8,6 +8,9 @@ from selenium.webdriver.common.keys import Keys
 from time import sleep
 import pyotp
 from selenium.webdriver.common.by import By
+import urllib.request
+
+
 
 
 # Đoạn script này dùng để khởi tạo 1 chrome profile
@@ -109,6 +112,9 @@ def loginBy2FA(driver, username, password, code):
         if (len(btn2faContinue) > 0):
             btn2faContinue[0].click()
             confirm2FA(driver)
+    # if (len(btn2fa) == 0):
+    #     btn2fa = driver.find_element(By.XPATH,'//div[2]/p[2]/a')
+    #   btn2fa.click()
     # end login
 
 fileIds = 'post_ids.csv'
@@ -162,7 +168,9 @@ def clonePostContent(driver, postId ):
         driver.get("https://mbasic.facebook.com/" + str(postId))
         parrentImage = driver.find_elements(By.XPATH,"//div[@data-gt='{\"tn\":\"E\"}']")
         if (len(parrentImage) == 0):
-            parrentImage = driver.find_elements(By.XPATH,"//div[@data-ft='{\"tn\":\"E\"}']")
+            parrentImage = driver.find_elements(By.XPATH,"//div[@data-ft='{\"tn\":\"E\"}']") # same data-ft="{&quot;tn&quot;:&quot;E&quot;}"
+        if (len(parrentImage) == 0):
+            parrentImage = driver.find_elements(By.XPATH,"//div[@data-ft='{\"tn\":\"H\"}']/div[1]")
 
         contentElement = driver.find_elements(By.XPATH,"//div[@data-gt='{\"tn\":\"*s\"}']")
         if (len(contentElement) == 0):
@@ -185,8 +193,8 @@ def clonePostContent(driver, postId ):
             linkImgsArr = []
             for link in linksArr:
                 driver.get(link)
-                linkImg = driver.find_elements(By.XPATH,'//*[@id="MPhotoContent"]/div[1]/div[2]/span/div/div/a[1]')
-                linkImgsArr.append(linkImg[0].get_attribute('href'))
+                linkImg = driver.find_elements(By.XPATH,'//*[@id="objects_container"]/div/div/div/div/div/div/div/div/img')
+                linkImgsArr.append(linkImg[0].get_attribute('src'))
 
         postData = {"post_id": postId, "content" : "", "images": []}
 
@@ -204,7 +212,7 @@ def writeFileTxtPost(fileName, content, idPost, pathImg="/img/"):
     pathImage = os.getcwd() + pathImg + str(idPost)
     os.makedirs(os.path.dirname(os.path.join(pathImage, fileName)), exist_ok=True)
     with open(os.path.join(pathImage, fileName), 'w', encoding='utf-16') as f1:
-        f1.write(content + '/r')
+        f1.write(content)
 
 def download_file(url, localFileNameParam , idPost, pathName = "/data/"):
     try:
@@ -213,15 +221,16 @@ def download_file(url, localFileNameParam , idPost, pathName = "/data/"):
 
         local_filename = url.split('/')[-1]
         if local_filename:
-            local_filename = localFileNameParam
-        with requests.get(url, stream=True) as r:
+            local_filename = localFileNameParam 
+        # with requests.get(url, stream=True) as r:
             pathImage = os.getcwd() + pathName + str(idPost)
 
             if (os.path.exists(pathImage) == False):
                 os.mkdir(pathImage)
+            urllib.request.urlretrieve(url, os.path.join(pathImage, local_filename+ '.jpg'))
 
-            with open(os.path.join(pathImage, local_filename), 'wb') as f:
-                shutil.copyfileobj(r.raw, f)
+            # with open(os.path.join(pathImage, local_filename), 'wb') as f:
+            #     shutil.copyfileobj(r.raw, f)
     except:
         print("download file err")
 
@@ -274,8 +283,8 @@ def crawlPostData(driver, postIds, type = 'page'):
                 for img in dataImage:
                     stt += 1
                     download_file(img, str(stt), postId, folderPath)
-                writeFileTxt('post_crawl.txt', str(id))
-                writeFileTxtPost('content.csv', postContent, postId, folderPath)
+                writeFileTxt('post_crawl.csv', str(id))
+                writeFileTxtPost('content.txt', postContent, postId, folderPath)
         except:
             print("crawl fail")
 
@@ -287,14 +296,14 @@ userName = '' # your user name fb
 passWord = '' # your password fb
 twoFa= '' # 2fa code
 limitPost = 1000
-idGroup = 'mfgvalley' # id group
+groupID = 'mfgvalley'
 
 if (isLogin == True):
     loginBy2FA(driver, userName, passWord, twoFa)
 
 value = input('Enter 1 to crawl id post of group, enter 2 to crawl content: ')
 if (int(value) == 1):
-    getPostsGroup(driver, idGroup, limitPost)
+    getPostsGroup(driver, groupID, limitPost)
 else:
     postIds = readData(fileIds)
     crawlPostData(driver, postIds, 'group')
